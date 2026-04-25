@@ -46,6 +46,7 @@ import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.Text;
 
 @Slf4j
 @PluginDescriptor(
@@ -58,6 +59,10 @@ public class BetterTeleportMenuPlugin extends Plugin implements KeyListener
 	private static final int PARAMID_TELENEXUS_DESTINATION_NAME = 660;
 
 	private static final char CHAR_UNSET = '\0';
+
+	private static final int CHANGE_BINDING_OP = 8;
+	private static final int CLEAR_BINDING_OP = 9;
+	private static final int DEFAULT_BINDING_OP = 10;
 
 	@VisibleForTesting
 	static final Pattern KEY_PREFIX_MATCHER = Pattern.compile("^(?:(<[^>]+>)([A-Za-z0-9])(:</[^>]+> |</[^>]+> *: +))?(.*?)((?:\\([^)]+\\))?)$");
@@ -434,7 +439,11 @@ public class BetterTeleportMenuPlugin extends Plugin implements KeyListener
 
 		void hotkeyChanged()
 		{
-			opWidget.setAction(8, "Set Hotkey (" + this.bind + ")");
+
+			opWidget.setAction(CHANGE_BINDING_OP, "Set Hotkey (" + this.bind + ")");
+			opWidget.setAction(CLEAR_BINDING_OP, "Clear Hotkey");
+			opWidget.setAction(DEFAULT_BINDING_OP, "Default Hotkey");
+
 			if (this.bind.isUnset())
 			{
 				textWidget.setText(displayText);
@@ -523,7 +532,37 @@ public class BetterTeleportMenuPlugin extends Plugin implements KeyListener
 	@Subscribe
 	private void onMenuOptionClicked(MenuOptionClicked ev)
 	{
-		if (ev.getMenuAction() == MenuAction.CC_OP_LOW_PRIORITY && ev.getId() == 9)
+		if (ev.getMenuAction() == MenuAction.CC_OP_LOW_PRIORITY && (ev.getId()-1) == CLEAR_BINDING_OP)
+		{
+			for (TeleMenu menu : teleMenus)
+			{
+				if (menu.opWidget.getId() == ev.getParam1() && menu.opWidget.getIndex() == ev.getParam0())
+				{
+					menu.bind = new Multikeybind();
+					configManager.setConfiguration(BetterTeleportMenuConfig.GROUP, BetterTeleportMenuConfig.KEYBIND_PREFIX + menu.identifier, menu.bind.toConfig());
+					clientThread.invokeLater(menu::hotkeyChanged);
+					ev.consume();
+					return;
+				}
+			}
+		}
+
+		if (ev.getMenuAction() == MenuAction.CC_OP_LOW_PRIORITY && (ev.getId()-1) == DEFAULT_BINDING_OP)
+		{
+			for (TeleMenu menu : teleMenus)
+			{
+				if (menu.opWidget.getId() == ev.getParam1() && menu.opWidget.getIndex() == ev.getParam0())
+				{
+					menu.bind = menu.defaultMultiBind();
+					configManager.setConfiguration(BetterTeleportMenuConfig.GROUP, BetterTeleportMenuConfig.KEYBIND_PREFIX + menu.identifier, menu.bind.toConfig());
+					clientThread.invokeLater(menu::hotkeyChanged);
+					ev.consume();
+					return;
+				}
+			}
+		}
+
+		if (ev.getMenuAction() == MenuAction.CC_OP_LOW_PRIORITY && (ev.getId()-1) == CHANGE_BINDING_OP)
 		{
 			for (TeleMenu menu : teleMenus)
 			{
@@ -568,8 +607,10 @@ public class BetterTeleportMenuPlugin extends Plugin implements KeyListener
 		client.runScript(ScriptID.SOMETHING_THAT_CC_RESUME_PAUSEBUTTON, w.getId(), w.getIndex());
 	}
 
-	private static String cleanify(String in)
+	private static String cleanify(String dirtyIn)
 	{
+		String in = Text.removeTags(dirtyIn);
+
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < in.length(); i++)
 		{
