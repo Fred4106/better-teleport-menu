@@ -528,26 +528,6 @@ public class BetterTeleportMenuPlugin extends Plugin implements KeyListener
 					ev.getMenuEntry().setOption(ev.getMenuEntry().getOption() + " (" + last + ")");
 				}
 			}
-			else if (List.of(ItemID.HG_QUETZALWHISTLE_BASIC, ItemID.HG_QUETZALWHISTLE_ENHANCED,ItemID.HG_QUETZALWHISTLE_PERFECTED)
-				.contains(ev.getMenuEntry().getItemId()))
-			{
-
-				var quetzalRows = client.getDBRowsByValue(
-					DBTableID.Quetzal.ID,
-					DBTableID.Quetzal.COL_ID,
-					0,
-					client.getVarbitValue(VarbitID.QUETZAL_LAST_DESTINATION));
-				String last = "";
-				if (!quetzalRows.isEmpty())
-				{
-					last = (String) client.getDBTableField(quetzalRows.get(0), DBTableID.Quetzal.COL_NAME, 0)[0];
-				}
-
-				if (!last.isBlank())
-				{
-					ev.getMenuEntry().setOption(ev.getMenuEntry().getOption() + " (" + last + ")");
-				}
-			}
 		}
 	}
 
