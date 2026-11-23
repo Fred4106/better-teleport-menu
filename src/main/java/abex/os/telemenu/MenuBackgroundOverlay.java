@@ -174,7 +174,7 @@ public class MenuBackgroundOverlay extends Overlay
 		text.getFont().drawWidgetText(text.getText(),
 			textBounds.x, textBounds.y, textBounds.width, textBounds.height,
 			text.getTextColor(), text.getTextShadowed() ? 0 : -1, 255,
-			text.getXTextAlignment(), text.getYTextAlignment(), text.getLineHeight());
+			text.getXTextAlignment(), text.getYTextAlignment(), text.getLineHeight(), false);
 
 		return null;
 	}
